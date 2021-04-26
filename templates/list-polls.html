@@ -1,0 +1,8 @@
+<h1>Polls</h1>
+<ul>
+{% for poll in object_list %}
+    <li>{{ poll.poll_name }} - start poll {{ poll.date_start }} - end poll {{ poll.date_end }}</li>
+{% empty %}
+    <li>No polls yet.</li>
+{% endfor %}
+</ul>
