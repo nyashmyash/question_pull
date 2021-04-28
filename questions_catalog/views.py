@@ -1,6 +1,5 @@
 
 # Create your views here.
-from django.views.generic.list import ListView
 from questions_catalog.models import User, Polls, Question, Choice, Answer, TYPES
 from django.http import JsonResponse
 from django.http import HttpResponse
@@ -8,13 +7,13 @@ from datetime import datetime
 import json
     
 
-class PollsListView(ListView):
-
-    model = Polls
-
-    def get_queryset(self):
-        return Polls.objects.filter(date_end__gte=datetime.now(), is_active=True
+def active_polls(request):
+    polls = Polls.objects.filter(date_end__gte=datetime.now(), is_active=True
                     ).order_by('date_start')
+    output = []
+    for p in polls:
+        output.append([p.poll_name, str(p.date_start), str(p.date_end), p.description])
+    return HttpResponse(str(output))
 
 from django.views.decorators.csrf import csrf_exempt
 
@@ -48,10 +47,9 @@ def set_answer(request):
         for ch_no in choice_no_list:
             one_choice = Choice.objects.get(question__id=id_question, choice_no=int(ch_no))
             choices.add(one_choice)
-    answ = Answer(user=user, question=Question.objects.get(id=id_question), answer_text=_answer_text)
+    answ = Answer.objects.create(user=user, question=Question.objects.get(id=id_question), answer_text=_answer_text)
     for ch in choices:
         answ.choice.add(ch)
-    answ.save()
     return HttpResponse("answer created")
 
 def user_answers(request):
@@ -65,11 +63,16 @@ def user_answers(request):
     output['answers'] = {}
     for answer in list_answ:
         poll_name = answer.question.poll.poll_name
-        question_text = answer.question.question_text
-        answer_text = answer.answer_text
-        if output['answers'].get(poll_name)!=None:
-            output['answers'][poll_name].append([question_text, answer_text])
+        question = [answer.question.id, answer.question.question_text]
+        if answer.answer_text!="":
+            answer_val = answer.answer_text
         else:
-            output['answers'][poll_name] = [[question_text, answer_text],]
+            answer_val = dict()
+            for choice in answer.choice.all():
+                answer_val[choice.choice_no] = [choice.id, choice.choice_text]
+        if output['answers'].get(poll_name)!=None:
+            output['answers'][poll_name].append([question, answer_val])
+        else:
+            output['answers'][poll_name] = [[question, answer_val],]
     return HttpResponse(str(output))
     

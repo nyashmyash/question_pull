@@ -1,10 +1,10 @@
 from django.urls import path
 from . import views
 
-from questions_catalog.views import PollsListView, user_answers, set_answer
+from questions_catalog.views import user_answers, set_answer, active_polls
 
 urlpatterns = [
-    path('polls-list/', PollsListView.as_view(template_name="list-polls.html")),
+    path('polls-list/', active_polls),
     path('answer-list/', user_answers),
     path('set-answer/', set_answer)
 ]
